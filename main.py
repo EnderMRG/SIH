@@ -7,14 +7,14 @@ import csv
 import os
 
 # --- Create output directory ---
-output_dir = "output"
+output_dir = "output2"
 os.makedirs(output_dir, exist_ok=True)
 
 # --- Read the image in color (24-bit: 3 channels, 8 bits each) ---
-img = cv2.imread("image/grain1.jpg", cv2.IMREAD_COLOR)   # (h, w, 3), dtype=uint8
+img = cv2.imread("image/grain2.jpg", cv2.IMREAD_COLOR)   # (h, w, 3), dtype=uint8
 
-# Pixel-to-micrometer conversion (example: 1 px = 0.5 µm)
-pixels_to_um = 0.5
+# Pixel-to-micrometer conversion (example: 1 px = 12 µm)
+pixels_to_um = 12
 
 # --- Convert to grayscale for thresholding ---
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -40,6 +40,21 @@ img2 = color.label2rgb(labeled_mask, bg_label=0)
 # --- Measure properties of each grain ---
 clusters = measure.regionprops(labeled_mask, gray)
 
+# --- Grain size classification function (Wentworth scale in µm) ---
+def classify_grain(size_um):
+    if size_um < 62.5:
+        return "Silt or smaller"
+    elif size_um < 125:
+        return "Very Fine Sand"
+    elif size_um < 250:
+        return "Fine Sand"
+    elif size_um < 500:
+        return "Medium Sand"
+    elif size_um < 1000:
+        return "Coarse Sand"
+    else:
+        return "Very Coarse Sand"
+
 # --- Open CSV file to save results ---
 csv_path = os.path.join(output_dir, 'grain_measurements.csv')
 with open(csv_path, 'w', newline='') as output_file:
@@ -47,10 +62,11 @@ with open(csv_path, 'w', newline='') as output_file:
 
     # Write header
     writer.writerow([
-        'Label', 'Area (um^2)', 'EquivalentDiameter (um)',
-        'MajorAxisLength (um)', 'MinorAxisLength (um)',
-        'Perimeter (um)', 'Orientation (deg)',
-        'AspectRatio', 'Circularity', 'Solidity'
+        'Label', 'Area (µm^2)', 'EquivalentDiameter (µm)',
+        'MajorAxisLength (µm)', 'MinorAxisLength (µm)',
+        'Perimeter (µm)', 'Orientation (deg)',
+        'AspectRatio', 'Circularity', 'Solidity',
+        'Grain Class'
     ])
 
     grain_sizes = []  # for histogram
@@ -73,11 +89,14 @@ with open(csv_path, 'w', newline='') as output_file:
         circularity = (4 * np.pi * area) / (perimeter ** 2) if perimeter > 0 else 0
         solidity = area / convex_area if convex_area > 0 else 0
 
+        # Grain classification
+        grain_class = classify_grain(eq_diam)
+
         # Save to CSV
         writer.writerow([
             label, area, eq_diam, major, minor,
             perimeter, orientation, aspect_ratio,
-            circularity, solidity
+            circularity, solidity, grain_class
         ])
 
         # Collect sizes for histogram
@@ -95,7 +114,7 @@ plt.title("Labeled Grains")
 plt.imshow(img2)
 plt.axis("off")
 plt.tight_layout()
-plt.savefig(os.path.join(output_dir, "grain_labels.png"), dpi=300)  # ✅ save labeled image
+plt.savefig(os.path.join(output_dir, "grain_labels.png"), dpi=300)
 plt.show()
 
 # --- Plot grain size distribution ---
@@ -105,7 +124,7 @@ plt.title("Grain Size Distribution")
 plt.xlabel("Equivalent Diameter (µm)")
 plt.ylabel("Frequency")
 plt.grid(alpha=0.3)
-plt.savefig(os.path.join(output_dir, "grain_size_distribution.png"), dpi=300)  # ✅ save histogram
+plt.savefig(os.path.join(output_dir, "grain_size_distribution.png"), dpi=300)
 plt.show()
 
 print(f"✅ Results saved in folder: {output_dir}")
