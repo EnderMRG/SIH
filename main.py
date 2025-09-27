@@ -7,11 +7,11 @@ import csv
 import os
 
 # --- Create output directory ---
-output_dir = "output2"
+output_dir = "output"
 os.makedirs(output_dir, exist_ok=True)
 
 # --- Read the image in color (24-bit: 3 channels, 8 bits each) ---
-img = cv2.imread("image/grain2.jpg", cv2.IMREAD_COLOR)   # (h, w, 3), dtype=uint8
+img = cv2.imread("image/grain1.jpg", cv2.IMREAD_COLOR)   # (h, w, 3), dtype=uint8
 
 # Pixel-to-micrometer conversion (example: 1 px = 0.5 µm)
 pixels_to_um = 0.5
@@ -47,9 +47,9 @@ with open(csv_path, 'w', newline='') as output_file:
 
     # Write header
     writer.writerow([
-        'Label', 'Area (nm^2)', 'EquivalentDiameter (nm)',
-        'MajorAxisLength (nm)', 'MinorAxisLength (nm)',
-        'Perimeter (nm)', 'Orientation (deg)',
+        'Label', 'Area (um^2)', 'EquivalentDiameter (um)',
+        'MajorAxisLength (um)', 'MinorAxisLength (um)',
+        'Perimeter (um)', 'Orientation (deg)',
         'AspectRatio', 'Circularity', 'Solidity'
     ])
 
